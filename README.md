@@ -77,9 +77,6 @@ Tidak ada kendala
 Setelah kita install File peta-ekspedisi-amba.pdf via gdown kita lakukan langkah berikut
 
 ```
-pdftotext -layout peta-ekspedisi-amba.pdf -
-
-# Atau simpan ke file untuk diperiksa
 pdftotext -layout peta-ekspedisi-amba.pdf isi-peta.txt
 cat isi-peta.txt
 ```
@@ -140,10 +137,14 @@ echo "Hasil disimpan di $OUTPUT"
 Script nemupusaka.sh berfungsi untuk menghitung koordinat titik tengah dari keempat node yang telah diekstrak sebelumnya, berdasarkan petunjuk sang Dukun bahwa lokasi pusaka berada tepat di tengah dari semua titik bekas ekspedisi paman. Pertama, script membaca file titik-penting.txt menggunakan awk dengan delimiter koma (-F',') untuk mengambil nilai latitude dan longitude dari node_001 (baris ke-1) dan node_003 (baris ke-3). Kedua node tersebut dipilih karena keempat titik membentuk sebuah persegi, sehingga node_001 dan node_003 merupakan titik yang saling berseberangan secara diagonal. Titik tengah kemudian dihitung menggunakan rumus titik tengah persegi yaitu (x1 + x2) / 2 untuk latitude dan (y1 + y2) / 2 untuk longitude, dengan bantuan perintah bc yang memungkinkan operasi aritmatika dengan presisi tinggi hingga 10 angka desimal (scale=10). Hasil koordinat pusat kemudian disimpan ke dalam file posisipusaka.txt dengan format latitude,longitude, dimana koordinat tersebut menunjukkan lokasi tepat dimana benda pusaka disembunyikan di sekitar kawasan Gunung Kawi, Jawa Timur.
 
 **Output**  
+<img width="685" height="136" alt="Screenshot 2026-03-25 021310" src="https://github.com/user-attachments/assets/b36ffbeb-6776-47ea-94d5-ecf915643338" />
+4 baris data koordinat yang masing-masing mewakili satu titik lokasi ekspedisi. Node_001 adalah Titik Berak Paman Mas Mba dengan koordinat latitude -7.920000 dan longitude 112.450000, node_002 adalah Basecamp Mas Fuad dengan koordinat latitude -7.920000 dan longitude 112.468100, node_003 adalah Gerbang Dimensi Keputih dengan koordinat latitude -7.937960 dan longitude 112.468100, dan node_004 adalah Tembok Ratapan Keputih dengan koordinat latitude -7.937960 dan longitude 112.450000.
 
+<img width="576" height="62" alt="Screenshot 2026-03-25 021350" src="https://github.com/user-attachments/assets/319efd1a-f80d-4b3b-bdab-03697b36d80a" />
+Nilai latitude pusat -7.9289800000 diperoleh dari rata-rata latitude node_001 (-7.920000) dan node_003 (-7.937960), sedangkan nilai longitude pusat 112.4590500000 diperoleh dari rata-rata longitude node_001 (112.450000) dan node_003 (112.468100).
 
 **Kendala**  
-Tidak ada kendala / [jelaskan kendala jika ada]
+Tidak ada kendala 
 
 </details>
 
