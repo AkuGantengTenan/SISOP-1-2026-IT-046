@@ -91,8 +91,31 @@ git clone https://github.com/pocongcyber77/peta-gunung-kawi.git peta-gunung-kawi
 Kita install semua isi repository dari GitHub ke folder lokal = peta-gunung-kawi. Di dalamnya ada file gsxtrack.json yang berisi data koordinat titik-titik ekspedisi paman Amba.
 
 ```
+#!/bin/bash
 
+INPUT="gsxtrack.json"
+OUTPUT="titik-penting.txt"
+
+> "$OUTPUT"
+
+ids=$(grep -oP '"id":\s*"\K[^"]+' "$INPUT")
+names=$(grep -oP '"site_name":\s*"\K[^"]+' "$INPUT")
+lats=$(grep -oP '"latitude":\s*\K[-0-9.]+' "$INPUT")
+lons=$(grep -oP '"longitude":\s*\K[-0-9.]+' "$INPUT")
+
+IFS=$'\n' read -r -d '' -a arr_ids   <<< "$ids"
+IFS=$'\n' read -r -d '' -a arr_names <<< "$names"
+IFS=$'\n' read -r -d '' -a arr_lats  <<< "$lats"
+IFS=$'\n' read -r -d '' -a arr_lons  <<< "$lons"
+
+for i in "${!arr_ids[@]}"; do
+    echo "${arr_ids[$i]},${arr_names[$i]},${arr_lats[$i]},${arr_lons[$i]}" >> "$OUTPUT"
+done
+
+echo "Parsing selesai. Hasil disimpan di $OUTPUT"
+cat "$OUTPUT"
 ```
+Script ini berfungsi untuk mengekstrak data koordinat dari file gsxtrack.json dan menyimpannya ke dalam file titik-penting.txt. Pertama, script mengosongkan file output dengan perintah > "$OUTPUT" untuk mencegah duplikasi data jika script dijalankan lebih dari satu kali. Selanjutnya, script menggunakan grep -oP dengan regex Perl untuk mengekstrak empat field secara terpisah yaitu id, site_name, latitude, dan longitude dari file JSON. Pola regex seperti '"id":\s*"\K[^"]+' bekerja dengan cara mengabaikan bagian "id": dan hanya mengambil nilainya saja, sedangkan untuk angka desimal seperti latitude dan longitude digunakan pola [-0-9.]+ agar bisa menangkap angka negatif dan titik desimal. Hasil dari setiap grep kemudian dikonversi menjadi array bash menggunakan IFS=$'\n' read -r -d '' -a agar tiap nilai bisa diakses berdasarkan index. Terakhir, script melakukan looping berdasarkan index array untuk menggabungkan keempat field dari node yang sama menjadi satu baris dengan format id,site_name,latitude,longitude dan menuliskannya ke file titik-penting.txt.
 
 **Output**  
 
