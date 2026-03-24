@@ -74,7 +74,25 @@ Tidak ada kendala
 <summary>Soal 2</summary>
 
 **Penjelasan**  
-Isi penjelasan Anda di sini.
+Setelah kita install File peta-ekspedisi-amba.pdf via gdown kita lakukan langkah berikut
+
+```
+pdftotext -layout peta-ekspedisi-amba.pdf -
+
+# Atau simpan ke file untuk diperiksa
+pdftotext -layout peta-ekspedisi-amba.pdf isi-peta.txt
+cat isi-peta.txt
+```
+langkah tersebut bertujuan untuk membaca file peta-ekspedisi-amba.pdf agar dapat menemukan tautan yang tersembunyi. 
+
+```
+git clone https://github.com/pocongcyber77/peta-gunung-kawi.git peta-gunung-kawi
+```
+Kita install semua isi repository dari GitHub ke folder lokal = peta-gunung-kawi. Di dalamnya ada file gsxtrack.json yang berisi data koordinat titik-titik ekspedisi paman Amba.
+
+```
+
+```
 
 **Output**  
 
