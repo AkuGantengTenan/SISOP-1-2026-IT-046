@@ -55,11 +55,18 @@ END {
 ```
 Di bagian ini seluruh perhitungan dari kode bagian 1 & 2 akan ditampilkan dengan menggunakan metode percabangan if else untuk soal a sampai dengan soal e. 
 
-**Output**  
+**Output**
 
+<img width="889" height="466" alt="Screenshot 2026-03-24 221001" src="https://github.com/user-attachments/assets/91615ad8-4f87-4595-b2ba-1784da8248ad" />
+
+soal a akan mencetak total seluruh penumpang yang ada di dalam file CSV
+soal b mencetak jumlah gerbong unik yang digunakan dalam perjalanan. 
+soal c  mencetak nama dan usia penumpang tertua dari proses perbandingan usia setiap penumpang.
+soal d mencetak rata-rata usia seluruh penumpang yang sudah dibulatkan. Nilai 38 didapat dari hasil pembagian total_age dengan count_passenger
+soal e mencetak jumlah penumpang yang memilih kelas Business. 
 
 **Kendala**  
-Tidak ada kendala / [jelaskan kendala jika ada]
+Tidak ada kendala
 
 </details>
 
