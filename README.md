@@ -90,7 +90,7 @@ git clone https://github.com/pocongcyber77/peta-gunung-kawi.git peta-gunung-kawi
 ```
 Kita install semua isi repository dari GitHub ke folder lokal = peta-gunung-kawi. Di dalamnya ada file gsxtrack.json yang berisi data koordinat titik-titik ekspedisi paman Amba.
 
-```
+```awk
 #!/bin/bash
 
 INPUT="gsxtrack.json"
@@ -116,6 +116,28 @@ echo "Parsing selesai. Hasil disimpan di $OUTPUT"
 cat "$OUTPUT"
 ```
 Script ini berfungsi untuk mengekstrak data koordinat dari file gsxtrack.json dan menyimpannya ke dalam file titik-penting.txt. Pertama, script mengosongkan file output dengan perintah > "$OUTPUT" untuk mencegah duplikasi data jika script dijalankan lebih dari satu kali. Selanjutnya, script menggunakan grep -oP dengan regex Perl untuk mengekstrak empat field secara terpisah yaitu id, site_name, latitude, dan longitude dari file JSON. Pola regex seperti '"id":\s*"\K[^"]+' bekerja dengan cara mengabaikan bagian "id": dan hanya mengambil nilainya saja, sedangkan untuk angka desimal seperti latitude dan longitude digunakan pola [-0-9.]+ agar bisa menangkap angka negatif dan titik desimal. Hasil dari setiap grep kemudian dikonversi menjadi array bash menggunakan IFS=$'\n' read -r -d '' -a agar tiap nilai bisa diakses berdasarkan index. Terakhir, script melakukan looping berdasarkan index array untuk menggabungkan keempat field dari node yang sama menjadi satu baris dengan format id,site_name,latitude,longitude dan menuliskannya ke file titik-penting.txt.
+
+```awk
+#!/bin/bash
+
+INPUT="titik-penting.txt"
+OUTPUT="posisipusaka.txt"
+
+lat1=$(awk -F',' 'NR==1 {print $3}' "$INPUT")
+lon1=$(awk -F',' 'NR==1 {print $4}' "$INPUT")
+
+lat3=$(awk -F',' 'NR==3 {print $3}' "$INPUT")
+lon3=$(awk -F',' 'NR==3 {print $4}' "$INPUT")
+
+lat_pusat=$(echo "scale=10; ($lat1 + $lat3) / 2" | bc)
+lon_pusat=$(echo "scale=10; ($lon1 + $lon3) / 2" | bc)
+
+echo "Koordinat pusat: $lat_pusat,$lon_pusat"
+echo "$lat_pusat,$lon_pusat" > "$OUTPUT"
+
+echo "Hasil disimpan di $OUTPUT"
+```
+Script nemupusaka.sh berfungsi untuk menghitung koordinat titik tengah dari keempat node yang telah diekstrak sebelumnya, berdasarkan petunjuk sang Dukun bahwa lokasi pusaka berada tepat di tengah dari semua titik bekas ekspedisi paman. Pertama, script membaca file titik-penting.txt menggunakan awk dengan delimiter koma (-F',') untuk mengambil nilai latitude dan longitude dari node_001 (baris ke-1) dan node_003 (baris ke-3). Kedua node tersebut dipilih karena keempat titik membentuk sebuah persegi, sehingga node_001 dan node_003 merupakan titik yang saling berseberangan secara diagonal. Titik tengah kemudian dihitung menggunakan rumus titik tengah persegi yaitu (x1 + x2) / 2 untuk latitude dan (y1 + y2) / 2 untuk longitude, dengan bantuan perintah bc yang memungkinkan operasi aritmatika dengan presisi tinggi hingga 10 angka desimal (scale=10). Hasil koordinat pusat kemudian disimpan ke dalam file posisipusaka.txt dengan format latitude,longitude, dimana koordinat tersebut menunjukkan lokasi tepat dimana benda pusaka disembunyikan di sekitar kawasan Gunung Kawi, Jawa Timur.
 
 **Output**  
 
