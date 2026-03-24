@@ -3,8 +3,17 @@
 <details>
 <summary>Soal 1</summary>
 
-**Penjelasan**  
-Isi penjelasan Anda di sini.
+**Penjelasan** 
+'''c
+BEGIN {
+    FS = ","
+    if (soal != "a" && soal != "b" && soal != "c" && soal != "d" && soal != "e") {
+        print "Soal tidak dikenali. Gunakan a, b, c, d, atau e."
+        print "Contoh penggunaan: awk -f file.sh data.csv a"
+        exit
+    }
+}
+'''c
 
 **Output**  
 
