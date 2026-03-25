@@ -320,6 +320,202 @@ fungsi_hapus_penghuni() {
 
 Fungsi ini mencari nama penghuni di CSV menggunakan AWK. Jika ditemukan, datanya terlebih dahulu diarsipkan ke history_hapus.csv dengan tambahan kolom tanggal hapus, baru kemudian dihapus dari database utama menggunakan AWK filter.
 
+```awk
+fungsi_tampilkan_daftar() {
+    clear
+    echo "========================================="
+    echo "      DAFTAR PENGHUNI KOST SLEBEW"
+    echo "========================================="
+
+    awk -F',' '
+    BEGIN {
+        printf " %-3s | %-15s | %-5s | %-12s | %-10s\n", "No", "Nama", "Kamar", "Harga Sewa", "Status"
+        print "-----------------------------------------"
+        aktif=0; menunggak=0; no=0
+    }
+    NR>1 {
+        no++
+        # Format harga dengan titik ribuan
+        harga = $3
+        # Format Rp dengan titik (awk tidak ada printf dengan titik, pakai sprintf manual atau pipe ke numfmt)
+        printf " %-3s | %-15s | %-5s | Rp%-10s | %-10s\n", no, $1, $2, harga, $5
+        print "-----------------------------------------"
+        if ($5 == "Aktif") aktif++
+        else menunggak++
+    }
+    END {
+        printf "\n Total: %d penghuni | Aktif: %d | Menunggak: %d\n", no, aktif, menunggak
+        print "========================================="
+    }
+    ' "$DB"
+
+    read -p "Tekan [ENTER] untuk kembali ke menu..."
+}
+```
+
+Fungsi ini menggunakan AWK untuk membaca CSV dan mencetak tabel. BEGIN mencetak header, setiap baris data (setelah NR > 1) dicetak dengan nomor urut otomatis, dan blok END mencetak ringkasan total penghuni, jumlah Aktif, dan jumlah Menunggak.
+
+```awk
+fungsi_update_status() {
+    clear
+    echo "========================================="
+    echo "           UPDATE STATUS"
+    echo "========================================="
+    read -p "Masukkan Nama Penghuni: " nama
+
+    # Cek nama ada
+    if ! awk -F',' -v n="$nama" 'NR>1 && $1==n {found=1} END {exit !found}' "$DB"; then
+        echo "[!] Penghuni \"$nama\" tidak ditemukan."
+        read -p "Tekan [ENTER] untuk kembali..."; return
+    fi
+
+    while true; do
+        read -p "Masukkan Status Baru (Aktif/Menunggak): " status_raw
+        status_lower=$(echo "$status_raw" | tr '[:upper:]' '[:lower:]')
+        if [[ "$status_lower" == "aktif" ]]; then
+            status="Aktif"; break
+        elif [[ "$status_lower" == "menunggak" ]]; then
+            status="Menunggak"; break
+        else
+            echo "[!] Status harus Aktif atau Menunggak."
+        fi
+    done
+
+    # Update kolom 5 menggunakan AWK
+    awk -F',' -v OFS=',' -v n="$nama" -v s="$status" '
+        NR==1 {print; next}
+        $1==n {$5=s}
+        {print}
+    ' "$DB" > /tmp/penghuni_tmp.csv
+    mv /tmp/penghuni_tmp.csv "$DB"
+
+    echo "[√] Status $nama berhasil diubah menjadi: $status"
+    read -p "Tekan [ENTER] untuk kembali ke menu..."
+}
+```
+
+
+Fungsi ini memverifikasi nama penghuni di database, lalu meminta input status baru dengan validasi case-insensitive. Update kolom dilakukan oleh AWK dengan -v OFS=',' yang mengganti nilai kolom ke-5 pada baris yang namanya cocok.
+
+```awk
+fungsi_laporan_keuangan() {
+    clear
+
+    # Hitung menggunakan AWK
+    hasil=$(awk -F',' '
+    NR>1 {
+        if ($5=="Aktif") { total_aktif += $3; kamar++ }
+        else { total_menunggak += $3 }
+        daftar_menunggak = daftar_menunggak $1 " (Kamar " $2 ") - Rp" $3 "\n"
+    }
+    END {
+        print "total_aktif=" total_aktif
+        print "total_menunggak=" total_menunggak
+        print "kamar=" kamar
+        print "daftar=" daftar_menunggak
+    }
+    ' "$DB")
+
+    eval "$hasil"
+
+    # Tampilkan
+    echo "========================================="
+    echo "    LAPORAN KEUANGAN KOST SLEBEW"
+    echo "========================================="
+    echo " Total pemasukan (Aktif)  : Rp$total_aktif"
+    echo " Total tunggakan          : Rp$total_menunggak"
+    echo " Jumlah kamar terisi      : $kamar"
+    echo "-----------------------------------------"
+    echo " Daftar penghuni menunggak:"
+    if [[ -z "$daftar" ]]; then
+        echo "   Tidak ada tunggakan."
+    else
+        echo -e "$daftar"
+    fi
+    echo "========================================="
+
+    # Simpan ke file rekap
+    {
+        echo "LAPORAN KEUANGAN KOST SLEBEW"
+        echo "Tanggal: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "Total pemasukan (Aktif)  : Rp$total_aktif"
+        echo "Total tunggakan          : Rp$total_menunggak"
+        echo "Jumlah kamar terisi      : $kamar"
+    } > "$REKAP"
+
+    echo "[√] Laporan berhasil disimpan ke rekap/laporan_bulanan.txt"
+    read -p "Tekan [ENTER] untuk kembali ke menu..."
+}
+```
+
+Bagian ini menghitung total pemasukan Aktif, total tunggakan, jumlah kamar terisi, dan daftar penghuni menunggak dalam satu pass. Hasilnya dikembalikan format key=value lalu di-eval menjadi variabel Bash dan disimpan ke laporan_bulanan.txt.
+
+
+```awk
+fungsi_kelola_cron() {
+    while true; do
+        clear
+        echo "================================="
+        echo "       MENU KELOLA CRON"
+        echo "================================="
+        echo " 1. Lihat Cron Job Aktif"
+        echo " 2. Daftarkan Cron Job Pengingat"
+        echo " 3. Hapus Cron Job Pengingat"
+        echo " 4. Kembali"
+        echo "================================="
+        read -p "Pilih [1-4]: " sub
+
+        case $sub in
+            1)
+                echo "--- Daftar Cron Job Pengingat Tagihan ---"
+                crontab -l 2>/dev/null | grep "kost_slebew.sh --check-tagihan" || echo "(Tidak ada cron job aktif)"
+                read -p "Tekan [ENTER] untuk kembali ke menu..."
+                ;;
+            2)
+                while true; do
+                    read -p "Masukkan Jam (0-23): " jam
+                    [[ "$jam" =~ ^[0-9]+$ ]] && [ "$jam" -ge 0 ] && [ "$jam" -le 23 ] && break
+                    echo "[!] Jam tidak valid."
+                done
+                while true; do
+                    read -p "Masukkan Menit (0-59): " menit
+                    [[ "$menit" =~ ^[0-9]+$ ]] && [ "$menit" -ge 0 ] && [ "$menit" -le 59 ] && break
+                    echo "[!] Menit tidak valid."
+                done
+
+                # Format 2 digit
+                jam_fmt=$(printf "%02d" "$jam")
+                menit_fmt=$(printf "%02d" "$menit")
+                script_path="$(realpath "$SCRIPT_DIR/kost_slebew.sh")"
+
+                # Hapus cron lama (overwrite), tambah baru
+                crontab -l 2>/dev/null | grep -v "kost_slebew.sh --check-tagihan" > /tmp/crontab_tmp
+                echo "$menit_fmt $jam_fmt * * * $script_path --check-tagihan" >> /tmp/crontab_tmp
+                crontab /tmp/crontab_tmp
+                rm /tmp/crontab_tmp
+
+                echo "[√] Cron job berhasil didaftarkan pukul $jam_fmt:$menit_fmt"
+                read -p "Tekan [ENTER] untuk kembali ke menu..."
+                ;;
+            3)
+                crontab -l 2>/dev/null | grep -v "kost_slebew.sh --check-tagihan" | crontab -
+                echo "[√] Cron job pengingat tagihan berhasil dihapus."
+                read -p "Tekan [ENTER] untuk kembali ke menu..."
+                ;;
+            4)
+                break
+                ;;
+            *)
+                echo "[!] Pilihan tidak valid."
+                sleep 1
+                ;;
+        esac
+    done
+}
+```
+
+Sub-menu ini menggunakan metode while true loop dengan 4 opsi. Opsi 1 menampilkan cron job dengan crontab -l | grep. Opsi 2 mendaftarkan jadwal baru sekaligus menghapus yang lama menggunakan grep -v agar hanya ada satu jadwal aktif. Opsi 3 menghapus cron job dengan grep -v | crontab -. Opsi 4 keluar sub-menu dengan break
+
 **Output**  
 
 
