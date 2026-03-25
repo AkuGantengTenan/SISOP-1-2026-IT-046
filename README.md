@@ -59,10 +59,14 @@ Di bagian ini seluruh perhitungan dari kode bagian 1 & 2 akan ditampilkan dengan
 
 <img width="889" height="466" alt="Screenshot 2026-03-24 221001" src="https://github.com/user-attachments/assets/91615ad8-4f87-4595-b2ba-1784da8248ad" />
 
-soal a akan mencetak total seluruh penumpang yang ada di dalam file CSV
+soal a akan mencetak total seluruh penumpang yang ada di dalam file CSV.
+
 soal b mencetak jumlah gerbong unik yang digunakan dalam perjalanan. 
+
 soal c  mencetak nama dan usia penumpang tertua dari proses perbandingan usia setiap penumpang.
+
 soal d mencetak rata-rata usia seluruh penumpang yang sudah dibulatkan. Nilai 38 didapat dari hasil pembagian total_age dengan count_passenger
+
 soal e mencetak jumlah penumpang yang memilih kelas Business. 
 
 **Kendala**  
@@ -154,7 +158,7 @@ Tidak ada kendala
 <summary>Soal 3</summary>
 
 **Penjelasan**  
-Pertama buat file kost_slebew.sh dan fetup ftruktur folder - file
+Pertama buat file kost_slebew.sh dan setup struktur folder/file sesuai ketentuan
 
 ```awk
 #!/bin/bash
@@ -516,12 +520,24 @@ fungsi_kelola_cron() {
 
 Sub-menu ini menggunakan metode while true loop dengan 4 opsi. Opsi 1 menampilkan cron job dengan crontab -l | grep. Opsi 2 mendaftarkan jadwal baru sekaligus menghapus yang lama menggunakan grep -v agar hanya ada satu jadwal aktif. Opsi 3 menghapus cron job dengan grep -v | crontab -. Opsi 4 keluar sub-menu dengan break
 
-**Output**  
+**Output** 
 
+<img width="594" height="358" alt="Screenshot 2026-03-25 164345" src="https://github.com/user-attachments/assets/6935bd41-411f-4791-9782-97f9fdfa001b" />
 
+Opsi 1 = Setelah semua input valid dimasukkan, program mencetak konfirmasi [√] 'Penghuni "Wowo" berhasil ditambahkan ke Kamar 1 dengan status Aktif' dan ENTER untuk kembali ke menu.
+
+Opsi 2 = Program meminta nama penghuni yang akan dihapus. Setelah nama ditemukan di database, program mencetak [√] 'Data penghuni "Wowo" berhasil diarsipkan ke sampah/history_hapus.csv dan dihapus dari sistem'.
+
+opsi 3 = Program menampilkan tabel dengan kolom No, Nama, Kamar, Harga Sewa, dan Status. Di bagian bawah tabel ditampilkan ringkasan seperti Total: 1 penghuni | Aktif: 1 | Menunggak: 0. Jika belum ada penghuni, tabel tetap tampil namun hanya berisi header dan summary dengan nilai nol.
+
+opsi 4 = Setelah input nama penghuni dan status baru, program mencetak = 'Status Wowo berhasil diubah menjadi: Menunggak'
+
+opsi 5 = Program menampilkan laporan berisi total pemasukan dari penghuni Aktif, total tunggakan dari penghuni Menunggak, jumlah kamar terisi, dan daftar nama penghuni yang menunggak. Jika tidak ada tunggakan, ditampilkan 'Tidak ada tunggakan'.
+
+opsi 6 = Program masuk ke sub-menu tersendiri dengan 4 opsi dan loop sendiri. Saat opsi 2 dipilih dan jam 07 menit 00 dimasukkan, program mendaftarkan cron job baru sekaligus menghapus yang lama sehingga di crontab -l hanya muncul satu baris seperti '00 07 * * * /home/user/SISOP-1-2026-IT-046/Soal_3/kost_slebew.sh --check-tagihan'. Saat opsi 3 dipilih, baris tersebut dihapus dan muncul konfirmasi 'Cron job pengingat tagihan berhasil dihapus'.
 
 **Kendala**  
-Tidak ada kendala / [jelaskan kendala jika ada]
+Tidak ada kendala 
 
 </details>
 
