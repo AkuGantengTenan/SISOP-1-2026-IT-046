@@ -154,7 +154,171 @@ Tidak ada kendala
 <summary>Soal 3</summary>
 
 **Penjelasan**  
-Isi penjelasan Anda di sini.
+Pertama buat file kost_slebew.sh dan fetup ftruktur folder - file
+
+```awk
+#!/bin/bash
+
+# --- PATH ABSOLUT (penting untuk cron) ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DB="$SCRIPT_DIR/data/penghuni.csv"
+LOG="$SCRIPT_DIR/log/tagihan.log"
+REKAP="$SCRIPT_DIR/rekap/laporan_bulanan.txt"
+SAMPAH="$SCRIPT_DIR/sampah/history_hapus.csv"
+
+fungsi_tambah_penghuni() { ... }
+fungsi_hapus_penghuni()  { ... }
+fungsi_tampilkan_daftar(){ ... }
+fungsi_update_status()   { ... }
+fungsi_laporan_keuangan(){ ... }
+fungsi_kelola_cron()     { ... }
+fungsi_check_tagihan()   { ... }  # dipanggil oleh cron
+
+# Jika dipanggil dengan argumen --check-tagihan
+if [[ "$1" == "--check-tagihan" ]]; then
+    fungsi_check_tagihan
+    exit 0
+fi
+
+# Loop menu utama
+while true; do
+    tampilkan_menu_utama
+    read -p "Enter option [1-7]: " pilihan
+    case $pilihan in
+        1) fungsi_tambah_penghuni ;;
+        2) fungsi_hapus_penghuni ;;
+        3) fungsi_tampilkan_daftar ;;
+        4) fungsi_update_status ;;
+        5) fungsi_laporan_keuangan ;;
+        6) fungsi_kelola_cron ;;
+        7) echo "Terima kasih!"; exit 0 ;;
+        *) echo "Pilihan tidak valid!" ;;
+    esac
+done
+```
+DI bagian ini definisi variabel path menggunakan SCRIPT_DIR yang diambil secara  dari lokasi script agar cron tetap bisa menemukan file pendukungnya. Dari SCRIPT_DIR dibentuk variabel DB, LOG, REKAP, dan SAMPAH yang menunjuk ke file CSV, log, rekap, dan arsip.
+
+```awk
+tampilkan_menu_utama() {
+    clear
+    echo "========================================="
+    echo "      SISTEM MANAJEMEN KOST SLEBEW"
+    echo "========================================="
+    echo " ID | OPTION"
+    echo "-----------------------------------------"
+    echo "  1 | Tambah Penghuni Baru"
+    echo "  2 | Hapus Penghuni"
+    echo "  3 | Tampilkan Daftar Penghuni"
+    echo "  4 | Update Status Penghuni"
+    echo "  5 | Cetak Laporan Keuangan"
+    echo "  6 | Kelola Cron (Pengingat Tagihan)"
+    echo "  7 | Exit Program"
+    echo "========================================="
+}
+```
+
+Fungsi ini membersihkan layar dengan clear dan menampilkan 7 opsi menu , fungsi ini dipanggil dengan while true loop.
+
+```awk
+fungsi_tambah_penghuni() {
+    clear
+    echo "========================================="
+    echo "           TAMBAH PENGHUNI"
+    echo "========================================="
+
+    # Input Nama
+    read -p "Masukkan Nama: " nama
+    # (validasi: tidak boleh kosong)
+
+    # Input Kamar — validasi UNIK
+    while true; do
+        read -p "Masukkan Kamar: " kamar
+        # Cek apakah kamar sudah ada di CSV (kolom 2)
+        if awk -F',' -v k="$kamar" 'NR>1 && $2==k {found=1} END {exit !found}' "$DB"; then
+            echo "[!] Kamar $kamar sudah ditempati. Pilih kamar lain."
+        else
+            break
+        fi
+    done
+
+    # Input Harga Sewa — validasi angka positif
+    while true; do
+        read -p "Masukkan Harga Sewa: " harga
+        if [[ "$harga" =~ ^[0-9]+$ ]] && [ "$harga" -gt 0 ]; then
+            break
+        else
+            echo "[!] Harga harus angka positif."
+        fi
+    done
+
+    # Input Tanggal — validasi format & tidak boleh masa depan
+    while true; do
+        read -p "Masukkan Tanggal Masuk (YYYY-MM-DD): " tanggal
+        # Cek format regex
+        if [[ ! "$tanggal" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "[!] Format tanggal salah."
+            continue
+        fi
+        # Cek tidak melebihi hari ini
+        today=$(date +%Y-%m-%d)
+        if [[ "$tanggal" > "$today" ]]; then
+            echo "[!] Tanggal tidak boleh melebihi hari ini."
+        else
+            break
+        fi
+    done
+
+    # Input Status — validasi Aktif/Menunggak (case-insensitive)
+    while true; do
+        read -p "Masukkan Status Awal (Aktif/Menunggak): " status_raw
+        status_lower=$(echo "$status_raw" | tr '[:upper:]' '[:lower:]')
+        if [[ "$status_lower" == "aktif" ]]; then
+            status="Aktif"; break
+        elif [[ "$status_lower" == "menunggak" ]]; then
+            status="Menunggak"; break
+        else
+            echo "[!] Status harus Aktif atau Menunggak."
+        fi
+    done
+
+    # Simpan ke CSV
+    echo "$nama,$kamar,$harga,$tanggal,$status" >> "$DB"
+    echo ""
+    echo "[√] Penghuni \"$nama\" berhasil ditambahkan ke Kamar $kamar dengan status $status."
+    read -p "Tekan [ENTER] untuk kembali ke menu..."
+}
+```
+
+Fungsi ini menerima input Nama, Kamar, Harga Sewa, Tanggal Masuk, dan Status. Setiap input divalidasi dan kamar dicek keunikannya dengan AWK, harga dicek menggunakan regex angka positif, tanggal dicek format dan tidak boleh masa depan, serta status dicek case-insensitive.
+
+```awk
+fungsi_hapus_penghuni() {
+    clear
+    echo "========================================="
+    echo "           HAPUS PENGHUNI"
+    echo "========================================="
+    read -p "Masukkan nama penghuni yang akan dihapus: " nama
+
+    # Cek apakah nama ada di database
+    baris=$(awk -F',' -v n="$nama" 'NR>1 && $1==n' "$DB")
+
+    if [[ -z "$baris" ]]; then
+        echo "[!] Penghuni \"$nama\" tidak ditemukan."
+    else
+        tanggal_hapus=$(date +%Y-%m-%d)
+        # Arsipkan ke history_hapus.csv (tambah kolom TanggalHapus)
+        echo "$baris,$tanggal_hapus" >> "$SAMPAH"
+        # Hapus dari database utama
+        awk -F',' -v n="$nama" '$1 != n' "$DB" > /tmp/penghuni_tmp.csv
+        mv /tmp/penghuni_tmp.csv "$DB"
+        echo "[√] Data penghuni \"$nama\" berhasil diarsipkan ke sampah/history_hapus.csv dan dihapus dari sistem."
+    fi
+
+    read -p "Tekan [ENTER] untuk kembali ke menu..."
+}
+```
+
+Fungsi ini mencari nama penghuni di CSV menggunakan AWK. Jika ditemukan, datanya terlebih dahulu diarsipkan ke history_hapus.csv dengan tambahan kolom tanggal hapus, baru kemudian dihapus dari database utama menggunakan AWK filter.
 
 **Output**  
 
