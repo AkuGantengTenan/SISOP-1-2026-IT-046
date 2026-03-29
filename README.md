@@ -163,7 +163,7 @@ Pertama buat file kost_slebew.sh dan setup struktur folder/file sesuai ketentuan
 ```awk
 #!/bin/bash
 
-# --- PATH ABSOLUT (penting untuk cron) ---
+ PATH ABSOLUT 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DB="$SCRIPT_DIR/data/penghuni.csv"
 LOG="$SCRIPT_DIR/log/tagihan.log"
